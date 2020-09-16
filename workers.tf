@@ -9,10 +9,10 @@ resource "aws_autoscaling_group" "workers" {
 
   #name = "${aws_eks_cluster.this[0].name}-${var.worker_groups[count.index].name}-${lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? "" : ""}"
 
-  name = "${aws_eks_cluster.this[0].name}-${var.worker_groups[count.index].name}-" #${lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers[count.index].id : ""}"
+#  name = "${aws_eks_cluster.this[0].name}-${var.worker_groups[count.index].name}-" #${lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers[count.index].id : ""}"
 
 
-  #name = "${aws_eks_cluster.this[0].name}-${var.worker_groups[count.index].name}-${lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers[count.index].id : ""}"
+  name = "${aws_eks_cluster.this[0].name}-${var.worker_groups[count.index].name}-${lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers[count.index].id : ""}"
   #name = "${aws_eks_cluster.this[0].name}-${lookup(var.worker_groups[count.index], "name", count.index)}-${lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"])}"
   #name = join(
   #  "-",
@@ -176,15 +176,28 @@ resource "aws_autoscaling_group" "workers" {
   }
 }
 
+
+data "null_data_source" "lc_public_ip_data_source" {
+  count = var.create_eks ? local.worker_group_count : 0
+  inputs = { value = lookup(var.worker_groups[count.index], "public_ip", local.workers_group_defaults["public_ip"]) }
+}
+
+output iterate_values {
+  value = "${data.null_data_source.lc_public_ip_data_source.*.outputs.value}"
+}
+
 resource "aws_launch_configuration" "workers" {
   count       = var.create_eks ? local.worker_group_count : 0
-  name_prefix = "${aws_eks_cluster.this[0].name}-${lookup(var.worker_groups[count.index], "name", count.index)}"
-  #name = "${aws_eks_cluster.this[0].name}-${count.index}"
-  associate_public_ip_address = lookup(
-    var.worker_groups[count.index],
-    "public_ip",
-    local.workers_group_defaults["public_ip"],
-  )
+  #name_prefix = "${aws_eks_cluster.this[0].name}-${lookup(var.worker_groups[count.index], "name", count.index)}"
+  name = "${aws_eks_cluster.this[0].name}-${var.worker_groups[count.index].name}" #{count.index}
+  associate_public_ip_address = local.workers_group_defaults["public_ip"]
+  #associate_public_ip_address = "${data.null_data_source.lc_public_ip_data_source[count.index].outputs.value}"
+  #associate_public_ip_address = var.worker_groups[count.index].public_ip ? var.worker_groups[count.index].public_ip : local.workers_group_defaults["public_ip"]
+  #associate_public_ip_address = lookup(
+  #  var.worker_groups[count.index],
+  #  "public_ip",
+  #  local.workers_group_defaults["public_ip"],
+  #)
   security_groups = flatten([
     local.worker_security_group_id,
     var.worker_additional_security_group_ids,
