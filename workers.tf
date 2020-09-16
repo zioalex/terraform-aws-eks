@@ -1,17 +1,59 @@
 # Worker Groups using Launch Configurations
 
+output "asg_recreate_on_change" {
+  value = "TEST_${var.worker_groups[0].asg_recreate_on_change}"
+}
+
 resource "aws_autoscaling_group" "workers" {
   count = var.create_eks ? local.worker_group_count : 0
-  name_prefix = join(
-    "-",
-    compact(
-      [
-        aws_eks_cluster.this[0].name,
-        lookup(var.worker_groups[count.index], "name", count.index),
-        lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers[count.index].id : ""
-      ]
-    )
-  )
+
+  #name = "${aws_eks_cluster.this[0].name}-${var.worker_groups[count.index].name}-${lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? "" : ""}"
+
+  name = "${aws_eks_cluster.this[0].name}-${var.worker_groups[count.index].name}-" #${lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers[count.index].id : ""}"
+
+
+  #name = "${aws_eks_cluster.this[0].name}-${var.worker_groups[count.index].name}-${lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers[count.index].id : ""}"
+  #name = "${aws_eks_cluster.this[0].name}-${lookup(var.worker_groups[count.index], "name", count.index)}-${lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"])}"
+  #name = join(
+  #  "-",
+  #  compact(
+  #    [
+  #      aws_eks_cluster.this[0].name,
+  #      lookup(var.worker_groups[count.index], "name", count.index),
+  #      lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers[count.index].id : ""
+  #    ]
+  #  )
+  #)
+#  name = "${aws_eks_cluster.this[0].name}-${lookup(var.worker_groups[count.index], "name", count.index)}-${lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers[count.index].id : ""}"
+  #name_prefix = join(
+  #  "-",
+  #  compact(
+  #    [
+  #      aws_eks_cluster.this[0].name,
+  #      lookup(var.worker_groups[count.index], "name", count.index),
+  #      lookup(var.worker_groups[count.index], "asg_recreate_on_change", true) ? random_pet.workers[count.index].id : ""
+  #    ]
+  #  )
+  #)
+  #name = join(
+  #  "-",
+  #  compact(
+  #    [
+  #      aws_eks_cluster.this[0].name,
+  #      lookup(var.worker_groups[count.index], "name", count.index)
+  #    ]
+  #  )
+  #)
+  #name_prefix = join(
+  #  "-",
+  #  compact(
+  #    [
+  #      aws_eks_cluster.this[0].name,
+  #      lookup(var.worker_groups[count.index], "name", count.index),
+  #      lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers[count.index].id : ""
+  #    ]
+  #  )
+  #)
   desired_capacity = lookup(
     var.worker_groups[count.index],
     "asg_desired_capacity",
@@ -137,6 +179,7 @@ resource "aws_autoscaling_group" "workers" {
 resource "aws_launch_configuration" "workers" {
   count       = var.create_eks ? local.worker_group_count : 0
   name_prefix = "${aws_eks_cluster.this[0].name}-${lookup(var.worker_groups[count.index], "name", count.index)}"
+  #name = "${aws_eks_cluster.this[0].name}-${count.index}"
   associate_public_ip_address = lookup(
     var.worker_groups[count.index],
     "public_ip",

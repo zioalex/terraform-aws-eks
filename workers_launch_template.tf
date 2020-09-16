@@ -2,6 +2,7 @@
 
 resource "aws_autoscaling_group" "workers_launch_template" {
   count = var.create_eks ? local.worker_group_launch_template_count : 0
+//  name_prefix = "eks-area23-default-highmem-worker-group20200907145923948000000002"
   name_prefix = join(
     "-",
     compact(
@@ -211,12 +212,14 @@ resource "aws_autoscaling_group" "workers_launch_template" {
 
 resource "aws_launch_template" "workers_launch_template" {
   count = var.create_eks ? (local.worker_group_launch_template_count) : 0
+  /*
   name_prefix = "${aws_eks_cluster.this[0].name}-${lookup(
     var.worker_groups_launch_template[count.index],
     "name",
     count.index,
   )}"
-
+  */
+  name_prefix = "${aws_eks_cluster.this[0].name}-count.index}"
   network_interfaces {
     associate_public_ip_address = lookup(
       var.worker_groups_launch_template[count.index],
@@ -432,6 +435,7 @@ resource "random_pet" "workers_launch_template" {
   length    = 2
 
   keepers = {
+    //lt_name = "eks-area23-default-highmem-worker-group20200907145923948000000002"
     lt_name = join(
       "-",
       compact(
